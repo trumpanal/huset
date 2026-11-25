@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HUSET — 让房子，成为家。</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1c1a17; --paper:#faf7f2; --cream:#f4efe6; --wood:#c8a06b; --wood-dark:#9a6f3f;
+    --muted:#8b857c; --line:#e7e0d4; --accent:#c94f3d; --mx:0; --my:0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    color:var(--ink); background:var(--paper); line-height:1.6; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  body.route-open{overflow:hidden}
+  ::selection{background:#c94f3d;color:#0b0b0b}
+  a{color:inherit;text-decoration:none}
+
+  /* 固定叠加层 */
+  .overlay{position:fixed;inset:0;pointer-events:none;z-index:60}
+  #wash{background:#7b7b7b;opacity:0}
+  #shade{background:#000;opacity:0}
+  #red{background:#5a0d08;opacity:0}
+  #vignette{background:radial-gradient(ellipse at center, transparent 0%, transparent 55%, rgba(0,0,0,.95) 100%);opacity:0}
+  #static{opacity:0;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:staticShift .3s steps(4) infinite}
+  @keyframes staticShift{0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-2%)}100%{transform:translate(3%,3%)}}
+
+  #progressbar{position:fixed;top:0;left:0;height:3px;width:0%;background:var(--wood);z-index:200;transition:background .6s}
+  #progressLabel{position:fixed;top:8px;right:14px;z-index:200;font-size:11px;letter-spacing:2px;color:#b6a98f;font-variant-numeric:tabular-nums;transition:color .8s}
+
+  .utility{background:#1c1a17;color:#cbbfae;font-size:12px;letter-spacing:.5px;display:flex;justify-content:space-between;padding:6px 28px}
+  header{position:sticky;top:0;z-index:80;background:rgba(250,247,242,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);transition:background 1.2s,border-color 1.2s}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;max-width:1240px;margin:0 auto}
+  .logo{font-weight:900;font-size:26px;letter-spacing:6px;color:var(--ink)}
+  .logo small{font-weight:400;font-size:11px;letter-spacing:3px;color:var(--muted);display:block;margin-top:-2px}
+  .nav-links{display:flex;gap:24px;font-size:14px;color:#4a463f}
+  .nav-links a:hover{color:var(--accent)}
+  .nav-tools{display:flex;gap:18px;align-items:center;font-size:14px}
+  .cartbtn{position:relative;cursor:pointer;font-weight:500;background:none;border:none;font-size:14px;font-family:inherit;color:inherit}
+  .cart-badge{position:absolute;top:-9px;right:-12px;background:var(--accent);color:#fff;font-size:11px;line-height:1;padding:3px 6px;border-radius:9px;min-width:17px;text-align:center}
+  .search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:20px;padding:6px 14px;color:var(--muted);font-size:13px}
+
+  .wrap{max-width:1240px;margin:0 auto;padding:0 28px}
+  .kicker{font-size:12px;letter-spacing:4px;color:var(--wood-dark);text-transform:uppercase;margin-bottom:14px}
+  h1,h2,h3{font-weight:900;letter-spacing:.5px}
+  h2{font-size:clamp(28px,4vw,44px);line-height:1.15}
+  .sub{color:var(--muted);max-width:560px;margin-top:12px}
+
+  .hero{position:relative;background:linear-gradient(180deg,#f6f1e7 0%,#efe6d4 100%);overflow:hidden}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center;min-height:82vh;padding:70px 0}
+  .hero h1{font-size:clamp(40px,6vw,72px);line-height:1.05;font-weight:900}
+  .hero h1 em{font-style:normal;color:var(--wood-dark)}
+  .hero p{margin:22px 0 30px;color:#6b6459;font-size:18px;max-width:440px}
+  .btn{display:inline-block;background:var(--ink);color:#faf7f2;padding:15px 34px;border-radius:30px;font-weight:700;letter-spacing:2px;font-size:14px;transition:transform .2s,background .3s;border:none;cursor:pointer;font-family:inherit}
+  .btn:hover{transform:translateY(-2px);background:#c94f3d}
+  .hero-trust{display:flex;gap:22px;margin-top:36px;font-size:13px;color:#6b6459}
+  .hero-trust span{display:flex;align-items:center;gap:7px}
+  .hero-art{display:flex;justify-content:center;align-items:center}
+
+  .features{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
+  .feature{background:var(--paper);padding:34px 28px}
+  .feature h3{font-size:16px;margin:10px 0 6px}
+  .feature p{font-size:13px;color:var(--muted)}
+
+  section.products{padding:90px 0}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:26px;margin-top:40px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;transition:box-shadow .3s,transform .3s;cursor:pointer}
+  .card:hover{box-shadow:0 14px 34px rgba(0,0,0,.09);transform:translateY(-4px)}
+  .thumb{height:190px;display:flex;align-items:center;justify-content:center;background:var(--cream)}
+  .thumb svg{width:78%;height:78%}
+  .card-body{padding:16px 18px 20px}
+  .tag{font-size:11px;letter-spacing:1px;color:#fff;background:var(--wood-dark);padding:2px 8px;border-radius:3px;display:inline-block;margin-bottom:8px}
+  .tag.hot{background:var(--accent)}
+  .card h3{font-size:17px;font-weight:700}
+  .card .desc{font-size:13px;color:var(--muted);margin:6px 0 12px;min-height:40px}
+  .price{font-weight:900;font-size:18px}
+  .price small{font-weight:400;font-size:12px;color:var(--muted);margin-left:8px}
+  .card-more{font-size:12px;color:var(--wood-dark);margin-top:10px;opacity:.7}
+
+  .feature-block{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center;padding:90px 0}
+  .feature-block .art{background:linear-gradient(135deg,#e8e0d0,#d9cdb8);border-radius:6px;min-height:360px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .feature-block .art svg{width:82%;height:82%}
+  .feature-block ul{list-style:none;margin-top:20px}
+  .feature-block li{padding:10px 0;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:baseline}
+  .feature-block li b{color:var(--wood-dark);font-size:20px}
+
+  .banner{background:var(--ink);color:#faf7f2;border-radius:6px;padding:52px 46px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+  .banner h3{font-size:28px}
+  .banner .btn{background:#fff;color:#1c1a17}
+
+  .divider{text-align:center;padding:40px 0;color:var(--muted);font-size:13px;letter-spacing:4px}
+
+  .reviews{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:40px}
+  .review{background:#fff;border:1px solid var(--line);border-radius:6px;padding:24px}
+  .stars{color:#d9a441;letter-spacing:2px;font-size:14px}
+  .review p{margin:12px 0;font-size:14px;color:#4a463f}
+  .review .who{font-size:12px;color:var(--muted)}
+
+  .mapbox{background:#1c1a17;color:#e9e2d6;border-radius:6px;padding:40px;display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:center}
+
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:40px}
+  .step{background:#fff;border:1px solid var(--line);border-radius:6px;padding:26px;text-align:center}
+  .step .num{font-size:12px;letter-spacing:2px;color:var(--wood-dark)}
+  .step .icon{height:90px;display:flex;align-items:center;justify-content:center;margin:10px 0}
+  .step h3{font-size:16px;margin-bottom:8px}
+  .step p{font-size:13px;color:var(--muted)}
+
+  .dark-section{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:120px 28px;position:relative}
+  .dark-section h2{font-size:clamp(34px,6vw,70px);line-height:1.05}
+  .glow{color:#fff;text-shadow:0 0 30px rgba(201,79,61,.5)}
+  .serif{font-family:"Noto Serif SC",Georgia,serif}
+
+  .clock{font-variant-numeric:tabular-nums;font-size:clamp(44px,7vw,92px);font-weight:900;letter-spacing:4px;color:#e9e2d6}
+  .clock-note{color:#9b8f7c;letter-spacing:3px;margin-top:14px;font-size:14px}
+
+  .hallway{perspective:700px;width:min(560px,90vw);margin:40px auto 0}
+  .hallway-scene{transform-style:preserve-3d;position:relative;height:340px;animation:breathe 7s ease-in-out infinite}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  .hall-walls{position:absolute;inset:0;background:linear-gradient(180deg,#15120f 0%,#0b0908 55%,#050403 100%);border-radius:6px;overflow:hidden}
+  .hall-floor{position:absolute;left:-10%;right:-10%;bottom:-4%;height:60%;background:repeating-linear-gradient(90deg,#14110d 0 14px,#1d1915 14px 15px);transform:rotateX(58deg);transform-origin:bottom;box-shadow:0 -40px 80px rgba(0,0,0,.8) inset}
+  .hall-door{position:absolute;left:50%;top:50%;width:110px;height:180px;transform:translate(-50%,-50%);background:linear-gradient(180deg,#2a1f14,#120c07);border:2px solid #0a0705;box-shadow:0 0 0 8px #0b0908,0 0 40px rgba(201,79,61,.12);animation:doorFlicker 5s steps(1) infinite}
+  .hall-door::after{content:"";position:absolute;inset:18px;border:1px solid #3a2c1d}
+  @keyframes doorFlicker{0%,100%{filter:brightness(1)}47%{filter:brightness(1)}48%{filter:brightness(.55)}49%{filter:brightness(1.3)}52%{filter:brightness(.4)}53%{filter:brightness(1)}}
+  .hall-caption{color:#9b8f7c;letter-spacing:3px;margin-top:22px;font-size:14px}
+
+  .eyes{display:flex;gap:60px;margin-top:50px}
+  .eye{width:120px;height:150px;background:#0b0b0b;border:3px solid #2c2c2c;border-radius:50%/60%;position:relative;overflow:hidden;box-shadow:0 0 40px rgba(201,79,61,.18)}
+  .eye .pupil{position:absolute;left:50%;top:50%;width:42px;height:42px;border-radius:50%;background:#000;transform:translate(calc(-50% + var(--mx)*22px),calc(-50% + var(--my)*16px));transition:transform .12s ease-out}
+  .eye .pupil::after{content:"";position:absolute;left:8px;top:6px;width:10px;height:10px;border-radius:50%;background:rgba(255,60,40,.9);box-shadow:0 0 12px rgba(255,60,40,.8)}
+  .eye::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,#3a2018,transparent 70%)}
+
+  form.member{margin-top:40px;display:flex;flex-direction:column;gap:14px;width:min(380px,90vw)}
+  form.member input{background:#121212;border:1px solid #333;color:#eee;padding:14px 16px;border-radius:4px;font-size:15px;font-family:inherit}
+  form.member input:focus{outline:none;border-color:#c94f3d}
+  form.member button{background:#c94f3d;color:#fff;border:none;padding:15px;border-radius:4px;font-size:15px;font-weight:700;letter-spacing:3px;cursor:pointer}
+  form.member button:hover{background:#a83c2e}
+  .form-reveal{min-height:60px;color:#c94f3d;font-size:14px;letter-spacing:1px;margin-top:8px}
+
+  .final{min-height:100vh;background:#000;color:#e9e2d6;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:100px 28px;position:relative}
+  .final h2{font-size:clamp(40px,7vw,84px);font-weight:900;color:#fff}
+  .flicker{animation:flicker 3.5s linear infinite}
+  @keyframes flicker{0%,100%{opacity:1}7%{opacity:.4}8%{opacity:1}42%{opacity:1}43%{opacity:.2}44%{opacity:1}62%{opacity:1}63%{opacity:.6}64%{opacity:1}78%{opacity:1}79%{opacity:.1}80%{opacity:1}}
+
+  .whisper{color:transparent;transition:color 1.2s;user-select:all;font-size:13px;letter-spacing:1px}
+  .whisper.on{color:rgba(180,60,45,.65)}
+  .whisper-hide{color:rgba(250,247,242,.02);font-size:12px;letter-spacing:1px;user-select:all}
+  .whisper-hide::selection{background:#c94f3d;color:#fff}
+
+  .glitching{animation:glitch .18s steps(2) infinite}
+  @keyframes glitch{0%{transform:translate(0,0) skewX(0)}25%{transform:translate(-4px,1px) skewX(2deg)}50%{transform:translate(3px,-2px)}75%{transform:translate(-2px,2px) skewX(-2deg)}100%{transform:translate(0,0)}}
+  .shake{animation:shake .5s ease-in-out infinite}
+  @keyframes shake{0%,100%{transform:translate(0)}25%{transform:translate(2px,-2px)}50%{transform:translate(-2px,2px)}75%{transform:translate(1px,1px)}}
+
+  footer{background:#0b0b0b;color:#7a7368;padding:60px 28px 40px;position:relative;z-index:10}
+  footer .cols{display:grid;grid-template-columns:repeat(4,1fr);gap:30px;max-width:1240px;margin:0 auto}
+  footer h4{color:#b7ab99;font-size:14px;margin-bottom:14px;letter-spacing:2px}
+  footer a{display:block;font-size:13px;color:#7a7368;padding:4px 0}
+  footer a:hover{color:#c94f3d}
+  .foot-note{margin-top:40px;text-align:center;font-size:12px;color:#4d473f;letter-spacing:1px}
+
+  /* ---------- 详情页 / 购物车页 ---------- */
+  .page{position:fixed;inset:0;z-index:300;background:var(--paper);overflow-y:auto;display:none}
+  .page.open{display:block}
+  .page-top{position:sticky;top:0;background:rgba(250,247,242,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:12px 28px;display:flex;align-items:center;gap:18px;z-index:5}
+  .back{background:none;border:1px solid var(--line);padding:8px 18px;border-radius:20px;cursor:pointer;font-size:14px;font-family:inherit;color:#4a463f}
+  .back:hover{border-color:var(--accent);color:var(--accent)}
+  .page-logo{font-weight:900;letter-spacing:5px}
+
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;padding:48px 0 90px}
+  .detail-art{background:var(--cream);border-radius:8px;min-height:420px;display:flex;align-items:center;justify-content:center}
+  .detail-art svg{width:min(360px,74%);height:auto}
+  .detail-info .price{font-size:28px}
+  .detail-info .desc{color:#5a544b;margin:18px 0;max-width:460px}
+  .specs{list-style:none;margin:20px 0}
+  .specs li{padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;color:#5a544b}
+  .specs li b{color:var(--muted);font-weight:400;display:inline-block;width:88px}
+  .stock{font-size:13px;color:var(--muted);margin:12px 0 18px}
+  .pnote{font-style:italic;color:#b06a5a;opacity:.4;font-size:13px;margin-top:16px;transition:opacity .7s;max-width:460px}
+  .pnote:hover{opacity:1}
+
+  .cart-list{margin-top:36px}
+  .cart-item{display:flex;align-items:center;gap:18px;padding:18px 0;border-bottom:1px solid var(--line)}
+  .cart-item .ci-art{width:76px;height:76px;background:var(--cream);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .cart-item .ci-art svg{width:70%;height:70%}
+  .ci-name{font-weight:700}
+  .ci-note{font-size:12px;color:#b06a5a;font-style:italic}
+  .ci-price{font-weight:700;margin-left:auto;white-space:nowrap}
+  .qty{display:flex;align-items:center;gap:10px}
+  .qty button{width:28px;height:28px;border:1px solid var(--line);background:#fff;border-radius:4px;cursor:pointer;font-size:15px}
+  .qty button:hover{border-color:var(--accent)}
+  .cart-phantom{opacity:.55}
+  .cart-summary{margin-top:30px;border-top:1px solid var(--line);padding-top:20px;max-width:480px;margin-left:auto;text-align:right}
+  .cart-summary .row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px;color:#5a544b}
+  .cart-summary .total{font-size:22px;font-weight:900;color:var(--ink)}
+  .cart-summary .total small{font-weight:400;font-size:13px;color:var(--muted)}
+  .checkout{margin-top:20px}
+  .checkout:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .cart-empty{text-align:center;padding:120px 20px;color:var(--muted)}
+  .cart-empty .big{font-size:60px;margin-bottom:16px}
+  .cart-scary-note{margin-top:22px;font-size:13px;color:#b06a5a;opacity:.5;text-align:right;max-width:480px;margin-left:auto}
+
+  #toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1a17;color:#fff;padding:12px 24px;border-radius:24px;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;font-size:14px}
+  #toast.show{opacity:1}
+
+  @media(max-width:900px){
+    .grid,.reviews,.steps{grid-template-columns:repeat(2,1fr)}
+    .hero-grid,.feature-block,.mapbox,.detail-grid{grid-template-columns:1fr}
+    .nav-links{display:none}
+    .features{grid-template-columns:1fr}
+    .eyes{gap:30px}
+    .eye{width:84px;height:110px}
+  }
+  @media(max-width:560px){
+    .grid,.reviews,.steps{grid-template-columns:1fr}
+    .utility{padding:6px 16px}
+    .wrap{padding:0 18px}
+  }
+</style>
+</head>
+<body>
+
+<div id="progressbar"></div>
+<div id="progressLabel">购物进度 · 0%</div>
+
+<div class="overlay" id="wash"></div>
+<div class="overlay" id="shade"></div>
+<div class="overlay" id="red"></div>
+<div class="overlay" id="vignette"></div>
+<div class="overlay" id="static"></div>
+
+<div class="utility">
+  <span>HUSET 家庭会员</span>
+  <span>客户服务 400-000-0000 · 门店查询 · 简体中文 · 帮助</span>
+</div>
+
+<header id="siteHeader">
+  <div class="nav">
+    <div class="logo">HUSET<small>让房子，成为家。</small></div>
+    <nav class="nav-links">
+      <a href="#new">新品上市</a>
+      <a href="#living">客厅灵感</a>
+      <a href="#bedroom">卧室灵感</a>
+      <a href="#reviews">顾客心声</a>
+      <a href="#about">关于我们</a>
+    </nav>
+    <div class="nav-tools">
+      <div class="search">🔍 搜索商品</div>
+      <button class="cartbtn" id="cartOpen">🛒 购物车 <span class="cart-badge" id="cartBadge">0</span></button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== 正常部分（加长、更缓） ===== -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="kicker">本周新品 · 低至 5 折</div>
+      <h1>让房子，<br>成为<em>家</em>。</h1>
+      <p>斯堪的纳维亚设计，平板包装，自己动手。这里有你想要的一切——以及更多。</p>
+      <a class="btn" href="#new">开始探索 ↓</a>
+      <div class="hero-trust">
+        <span>✓ 365 天退换</span>
+        <span>✓ 免费送货</span>
+        <span>✓ 会员免费咖啡</span>
+      </div>
+    </div>
+    <div class="hero-art">
+      <svg width="520" height="420" viewBox="0 0 520 420" fill="none">
+        <rect x="0" y="0" width="520" height="300" fill="#ece2d0"/><rect x="0" y="300" width="520" height="120" fill="#cbb99a"/>
+        <rect x="60" y="70" width="160" height="150" fill="#f4efe6" stroke="#d9cdb8" stroke-width="6"/>
+        <line x1="140" y1="70" x2="140" y2="220" stroke="#d9cdb8" stroke-width="6"/><line x1="60" y1="145" x2="220" y2="145" stroke="#d9cdb8" stroke-width="6"/>
+        <rect x="290" y="120" width="170" height="90" rx="14" fill="#9a6f3f"/><rect x="300" y="210" width="150" height="40" rx="10" fill="#8a6a44"/>
+        <rect x="310" y="250" width="14" height="50" fill="#6d5134"/><rect x="426" y="250" width="14" height="50" fill="#6d5134"/>
+        <rect x="320" y="130" width="30" height="70" rx="10" fill="#e9dfc9"/><rect x="400" y="130" width="30" height="70" rx="10" fill="#e9dfc9"/>
+        <ellipse cx="260" cy="330" rx="150" ry="34" fill="#a8845b"/><ellipse cx="260" cy="326" rx="118" ry="24" fill="#b88f63"/>
+        <rect x="180" y="150" width="8" height="170" fill="#5f5548"/><path d="M150 150 L214 150 L196 100 L168 100 Z" fill="#e8b04a"/>
+        <circle cx="182" cy="128" r="12" fill="#fff3c9"/><path d="M450 300 C430 250 490 250 470 300 Z" fill="#6f8f5a"/>
+        <path d="M455 298 C445 270 475 270 465 298 Z" fill="#7fa06a"/><rect x="440" y="300" width="40" height="40" rx="6" fill="#c8a06b"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<div class="features">
+  <div class="feature"><div>🛋️</div><h3>平价，却不廉价</h3><p>我们相信美好的设计属于每一个人。</p></div>
+  <div class="feature"><div>📦</div><h3>平板包装 · 自己动手</h3><p>一点耐心，一把螺丝刀，一个家。</p></div>
+  <div class="feature"><div>☕</div><h3>会员免费咖啡</h3><p>逛累了，就坐下来。我们有很多时间。</p></div>
+</div>
+
+<section class="products" id="new">
+  <div class="wrap">
+    <div class="kicker">NEW ARRIVALS</div>
+    <h2>本周新品</h2>
+    <p class="sub">精选好物，限时优惠。选一件，把它带回家。</p>
+    <div class="grid" id="gridNormal"></div>
+  </div>
+</section>
+
+<section class="feature-block wrap" id="living">
+  <div class="art">
+    <svg width="420" height="300" viewBox="0 0 420 300"><rect width="420" height="230" fill="#e8dfcd"/><rect y="230" width="420" height="70" fill="#c9b595"/><rect x="150" y="60" width="120" height="120" fill="#f7f2e8" stroke="#d9cdb8" stroke-width="6"/><line x1="210" y1="60" x2="210" y2="180" stroke="#d9cdb8" stroke-width="6"/><line x1="150" y1="120" x2="270" y2="120" stroke="#d9cdb8" stroke-width="6"/><rect x="40" y="140" width="130" height="55" rx="12" fill="#9a6f3f"/><rect x="50" y="195" width="110" height="18" rx="8" fill="#8a6a44"/><rect x="55" y="135" width="26" height="50" rx="8" fill="#e9dfc9"/><rect x="129" y="135" width="26" height="50" rx="8" fill="#e9dfc9"/><rect x="320" y="130" width="8" height="120" fill="#5f5548"/><path d="M288 130 L360 130 L338 90 L310 90 Z" fill="#e8b04a"/><ellipse cx="300" cy="270" rx="120" ry="20" fill="#a8845b"/></svg>
+  </div>
+  <div>
+    <div class="kicker">LIVING ROOM</div>
+    <h2>客厅，是一个家的心脏</h2>
+    <p class="sub">一盏灯，一张沙发，一块地毯。把喜欢的都放在一起，就成了家。</p>
+    <ul>
+      <li><b>01</b> 从一张舒适的沙发开始</li>
+      <li><b>02</b> 用灯光营造温柔的氛围</li>
+      <li><b>03</b> 让地毯把空间连成一体</li>
+    </ul>
+    <span class="whisper-hide">它们不只是家具。它们在看你。</span>
+  </div>
+</section>
+
+<section class="feature-block wrap" id="bedroom">
+  <div>
+    <div class="kicker">BEDROOM</div>
+    <h2>卧室，是把自己还给自己的地方</h2>
+    <p class="sub">一盏柔光，一张安静的床，把白天留在门外。</p>
+    <ul>
+      <li><b>01</b> 用柔和的床头灯取代刺眼的主灯</li>
+      <li><b>02</b> 让窗帘把晨光温柔地留在外面</li>
+      <li><b>03</b> 一张安静的床，比什么都重要</li>
+    </ul>
+  </div>
+  <div class="art">
+    <svg width="420" height="300" viewBox="0 0 420 300"><rect width="420" height="240" fill="#ece4d4"/><rect y="240" width="420" height="60" fill="#cbb99a"/><rect x="90" y="60" width="120" height="90" fill="#f4efe6" stroke="#d9cdb8" stroke-width="5"/><rect x="240" y="120" width="60" height="30" fill="#9a6f3f"/><rect x="246" y="150" width="10" height="60" fill="#6d5134"/><rect x="284" y="150" width="10" height="60" fill="#6d5134"/><rect x="252" y="124" width="36" height="30" rx="6" fill="#e9dfc9"/><ellipse cx="270" cy="260" rx="120" ry="18" fill="#a8845b"/><rect x="70" y="170" width="6" height="80" fill="#5f5548"/><path d="M46 170 L100 170 L88 128 L58 128 Z" fill="#e8b04a"/></svg>
+  </div>
+</section>
+
+<section class="products">
+  <div class="wrap">
+    <div class="kicker">STORAGE TIPS</div>
+    <h2>收纳小贴士</h2>
+    <p class="sub">让家井井有条的三个小习惯。</p>
+    <div class="steps">
+      <div class="step"><div class="num">习惯 1</div><div class="icon"><svg width="90" height="70"><rect x="20" y="28" width="50" height="34" rx="4" fill="#e9dfc9" stroke="#8a6a44" stroke-width="3"/><rect x="24" y="34" width="42" height="22" fill="none" stroke="#c8a06b" stroke-width="2"/><rect x="40" y="24" width="10" height="8" fill="#8a6a44"/></svg></div><h3>分区收纳盒</h3><p>把同类物品收在一起，找起来更省心。</p></div>
+      <div class="step"><div class="num">习惯 2</div><div class="icon"><svg width="90" height="70"><rect x="14" y="16" width="62" height="10" rx="3" fill="#a8845b"/><rect x="20" y="26" width="8" height="30" fill="#8a6a44"/><rect x="62" y="26" width="8" height="30" fill="#8a6a44"/><rect x="26" y="30" width="12" height="12" fill="#c94f3d"/><rect x="52" y="30" width="12" height="12" fill="#6f8f5a"/></svg></div><h3>挂墙置物架</h3><p>把地面还给行走，把收纳交给墙面。</p></div>
+      <div class="step"><div class="num">习惯 3</div><div class="icon"><svg width="90" height="70"><rect x="20" y="10" width="50" height="54" rx="3" fill="none" stroke="#8a6a44" stroke-width="4"/><rect x="30" y="20" width="6" height="34" fill="#8a6a44"/><path d="M30 24 L38 18 L36 32" fill="#c8a06b"/></svg></div><h3>门后挂钩</h3><p>利用那些总被忽略的空间。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="banner">
+    <div>
+      <div class="kicker" style="color:#c8a06b">HUSET FAMILY</div>
+      <h3>加入家庭会员，享全年优惠</h3>
+      <p style="color:#cbbfae;margin-top:8px">免费咖啡、生日礼遇、专属折扣。注册只需一分钟。</p>
+    </div>
+    <a class="btn" href="#signup">立即加入 →</a>
+  </div>
+</section>
+
+<section class="feature-block wrap" id="story">
+  <div>
+    <div class="kicker">FROM FOREST TO HOME</div>
+    <h2>从森林，到你的客厅</h2>
+    <p class="sub">每一件家具都经过选材、干燥、打磨，再被小心翼翼地装进纸箱。我们只希望，它们能陪你很久很久。</p>
+  </div>
+  <div class="art">
+    <svg width="420" height="300" viewBox="0 0 420 300"><rect width="420" height="300" fill="#e5dcc8"/><rect x="60" y="60" width="24" height="200" fill="#8a6a44"/><path d="M72 70 C40 100 40 150 72 170 C104 150 104 100 72 70 Z" fill="#7fa06a"/><path d="M72 120 C50 145 50 175 72 190 C94 175 94 145 72 120 Z" fill="#6f8f5a"/><rect x="280" y="90" width="20" height="180" fill="#a8845b"/><circle cx="290" cy="90" r="34" fill="#7fa06a"/><circle cx="320" cy="70" r="26" fill="#6f8f5a"/><ellipse cx="200" cy="270" rx="180" ry="22" fill="#c9b595"/></svg>
+  </div>
+</section>
+
+<div class="divider">▼ ▼ ▼ &nbsp;继续往下看&nbsp; ▼ ▼ ▼</div>
+
+<!-- ===== 渐变区（诡异开始浮现） ===== -->
+<section class="products">
+  <div class="wrap">
+    <div class="kicker">MORE FOR YOU</div>
+    <h2>更多选择</h2>
+    <p class="sub">本周特惠 · <span id="limitTag">限时</span> · 数量有限，先到先得。</p>
+    <div class="grid" id="gridWeird"></div>
+    <span class="whisper" id="w1" style="margin-top:26px;text-align:center">它们都不是商品。它们是住在这里的。</span>
+  </div>
+</section>
+
+<section class="products" id="reviews">
+  <div class="wrap">
+    <div class="kicker">CUSTOMER VOICES</div>
+    <h2>顾客心声</h2>
+    <p class="sub">来自真实顾客的真实评价。</p>
+    <div class="reviews">
+      <div class="review"><div class="stars">★★★★★</div><p>沙发很舒服，组装说明书也很清楚，客服回复也很快。</p><div class="who">王女士 · 已购 SOFIA</div></div>
+      <div class="review"><div class="stars">★★★★★</div><p>送货很快，包装很结实，一点磕碰都没有。</p><div class="who">李先生 · 已购 BORDET</div></div>
+      <div class="review"><div class="stars">★★★★☆</div><p>餐桌很稳，就是有点重，两个人搬才搬得动。</p><div class="who">张女士 · 已购 BORDET</div></div>
+      <div class="review"><div class="stars">★★★★★</div><p>性价比很高，已经回购第二单了。</p><div class="who">匿名 · 已购 BOKHYLLA</div></div>
+      <div class="review"><div class="stars">★★★★★</div><p>床架很安静，翻个身一点声音都没有。</p><div class="who">陈先生 · 已购 SÄNGEN</div></div>
+      <div class="review"><div class="stars">★★★★☆</div><p>镜子很好，就是……总觉得镜子里的人慢了半拍。总之五星推荐。</p><div class="who">赵女士 · 已购 SPEGELN</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="kicker">STORE MAP</div>
+  <h2 style="margin-bottom:26px">门店平面图</h2>
+  <div class="mapbox">
+    <div>
+      <svg width="100%" height="300" viewBox="0 0 420 300" style="max-width:420px">
+        <rect x="10" y="10" width="400" height="280" fill="#14110d" stroke="#3a3329" stroke-width="3"/>
+        <rect x="30" y="30" width="360" height="240" fill="none" stroke="#4a4238" stroke-width="2"/>
+        <rect x="30" y="60" width="280" height="10" fill="#6d6455"/><rect x="30" y="120" width="220" height="10" fill="#6d6455"/>
+        <rect x="140" y="180" width="220" height="10" fill="#6d6455"/><rect x="30" y="240" width="300" height="10" fill="#6d6455"/>
+        <rect x="300" y="30" width="10" height="130" fill="#6d6455"/><rect x="120" y="120" width="10" height="70" fill="#6d6455"/>
+        <rect x="220" y="180" width="10" height="70" fill="#6d6455"/><rect x="360" y="120" width="10" height="130" fill="#6d6455"/>
+        <circle cx="60" cy="45" r="9" fill="#c94f3d"/><text x="78" y="49" fill="#c94f3d" font-size="13">您在这里</text>
+        <rect x="330" y="255" width="60" height="14" fill="#2f4a3a" stroke="#4f7a5f" stroke-width="2"/>
+        <text x="318" y="284" fill="#7fb08f" font-size="13">出口</text>
+        <path d="M360 250 L300 235" stroke="#c94f3d" stroke-width="3" marker-end="url(#arr)"/>
+        <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#c94f3d"/></marker></defs>
+      </svg>
+    </div>
+    <div>
+      <p style="font-size:15px;color:#cbbfae;line-height:2">
+        蓝色箭头指引购物动线。<br>它们都指向同一个方向。<br>那个方向<strong style="color:#c94f3d">没有出口</strong>。<br><br>
+        本图仅供参考。实际门店可能略有不同。<br>实际上，它一直在变。
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="products">
+  <div class="wrap">
+    <div class="kicker">ASSEMBLY</div>
+    <h2>自己动手，丰衣足食</h2>
+    <p class="sub">只需几个简单的步骤，就能拥有全新的家具。</p>
+    <div class="steps">
+      <div class="step"><div class="num">步骤 1</div><div class="icon"><svg width="90" height="70"><rect x="10" y="30" width="70" height="34" fill="#e9dfc9" stroke="#8a6a44" stroke-width="3"/><path d="M20 30 L30 14 L60 14 L70 30" fill="none" stroke="#8a6a44" stroke-width="3"/></svg></div><h3>打开包装</h3><p>小心地拆开纸箱，取出所有零件。</p></div>
+      <div class="step"><div class="num">步骤 2</div><div class="icon"><svg width="90" height="70"><circle cx="30" cy="40" r="5" fill="#8a6a44"/><circle cx="50" cy="30" r="5" fill="#8a6a44"/><rect x="25" y="48" width="40" height="8" fill="#8a6a44"/><rect x="60" y="40" width="18" height="6" fill="#8a6a44"/></svg></div><h3>清点零件</h3><p>对照说明书，确认所有零件都在。</p></div>
+      <div class="step"><div class="num">步骤 3</div><div class="icon"><svg width="90" height="70"><path d="M20 50 L35 20 L55 20 L70 50" fill="none" stroke="#8a6a44" stroke-width="3"/><rect x="38" y="50" width="14" height="14" fill="#c94f3d"/><text x="45" y="30" fill="#8a6a44" font-size="12" text-anchor="middle">?</text></svg></div><h3>按图组装</h3><p>如果图纸和实物不符，请相信图纸。</p></div>
+      <div class="step"><div class="num">步骤 4</div><div class="icon"><svg width="90" height="70"><text x="45" y="38" font-size="34" text-anchor="middle" fill="#4a4238">03:00</text><text x="45" y="58" font-size="12" text-anchor="middle" fill="#8a6a44">听到响声</text></svg></div><h3>凌晨三点</h3><p>如果听到螺丝掉落的声音，请假装没听见。</p></div>
+      <div class="step"><div class="num">步骤 5</div><div class="icon"><svg width="90" height="70"><rect x="30" y="20" width="30" height="36" rx="4" fill="#8a6a44"/><rect x="36" y="30" width="8" height="16" fill="#4a4238"/><rect x="46" y="30" width="8" height="16" fill="#4a4238"/></svg></div><h3>处理多余零件</h3><p>把剩下的零件藏起来。它们不属于任何家具。</p></div>
+      <div class="step"><div class="num">步骤 6</div><div class="icon"><svg width="90" height="70"><rect x="10" y="24" width="70" height="40" rx="6" fill="none" stroke="#c94f3d" stroke-width="3"/><rect x="18" y="32" width="24" height="24" fill="#c94f3d" opacity=".5"/><rect x="48" y="32" width="24" height="24" fill="#c94f3d" opacity=".5"/></svg></div><h3>完成</h3><p>现在，家具组装好了。它也组装好了你。</p></div>
+    </div>
+    <p class="whisper" id="w3" style="margin-top:26px;text-align:center">如果组装过程中感到有人注视你，请不要中断。它喜欢看你完成。</p>
+  </div>
+</section>
+
+<section class="feature-block wrap" id="about">
+  <div>
+    <div class="kicker">ABOUT HUSET</div>
+    <h2>始于 1943 年</h2>
+    <p class="sub">我们相信，每个人都值得一个美好的家。近一个世纪以来，我们一直陪伴着无数家庭。</p>
+    <p class="sub" style="margin-top:16px">我们也相信，<em>家会选择它的主人</em>。</p>
+  </div>
+  <div class="art" style="background:linear-gradient(135deg,#2a251f,#181410);min-height:320px">
+    <p style="color:#cbbfae;font-family:'Noto Serif SC',serif;font-size:20px;text-align:center;line-height:2;padding:20px">当家具开始回应你的目光时，<br>说明你已经属于这里了。</p>
+  </div>
+</section>
+
+<!-- ===== 深水区 ===== -->
+<section class="dark-section" style="background:#0d0b09;color:#e9e2d6">
+  <div class="kicker" style="color:#8a3a2e">DID YOU NOTICE?</div>
+  <h2 class="glow serif">你已经在这里<br>逛了很久了。</h2>
+  <p style="color:#9b8f7c;margin-top:30px;font-size:15px;letter-spacing:2px">从什么时候开始的？你还记得来时的路吗？</p>
+</section>
+
+<section class="dark-section" style="background:#080706;color:#e9e2d6">
+  <div class="kicker" style="color:#8a3a2e">CLOSING TIME</div>
+  <div class="clock" id="clock">--:--:--</div>
+  <p class="clock-note" id="clockNote">营业时间 09:00 – 21:00 · 现在已经过了打烊时间</p>
+  <p style="color:#5d564c;margin-top:40px;font-size:13px;letter-spacing:3px">大门已经锁上。请继续购物。</p>
+</section>
+
+<section class="dark-section" style="background:#0a0807;color:#e9e2d6">
+  <div class="kicker" style="color:#8a3a2e">THE WAY HOME</div>
+  <h2 class="serif" style="font-size:clamp(26px,4vw,44px)">出口在这边 →</h2>
+  <div class="hallway">
+    <div class="hallway-scene"><div class="hall-walls"></div><div class="hall-door"></div><div class="hall-floor"></div></div>
+  </div>
+  <p class="hall-caption">这扇门通向更多的走廊。走廊的尽头，还有一扇门。</p>
+</section>
+
+<section class="dark-section" style="background:#050404;color:#e9e2d6;cursor:crosshair">
+  <div class="kicker" style="color:#8a3a2e">WE SEE YOU</div>
+  <h2 class="glow serif">我们注意到你。</h2>
+  <p style="color:#9b8f7c;margin-top:18px;font-size:15px;letter-spacing:2px">我们一直在注意你。</p>
+  <div class="eyes"><div class="eye"><div class="pupil"></div></div><div class="eye"><div class="pupil"></div></div></div>
+  <p class="whisper" id="w4" style="margin-top:40px">别回头。</p>
+</section>
+
+<section class="dark-section" style="background:#070606;color:#e9e2d6" id="signup">
+  <div class="kicker" style="color:#8a3a2e">JOIN US</div>
+  <h2 class="serif" style="font-size:clamp(28px,5vw,52px)">成为会员</h2>
+  <p style="color:#9b8f7c;margin:18px 0 0;font-size:14px;letter-spacing:2px">注册，即可永久享受优惠。我们一直知道你在哪里。</p>
+  <form class="member" id="memberForm" autocomplete="off">
+    <input type="text" id="fname" placeholder="姓名" required>
+    <input type="text" id="femail" placeholder="电子邮件（可选）">
+    <button type="submit">注 册</button>
+    <div class="form-reveal" id="formReveal"></div>
+  </form>
+</section>
+
+<section class="final">
+  <div class="kicker" style="color:#5d1410">WELCOME HOME</div>
+  <h2 class="flicker serif">欢迎回家。</h2>
+  <p style="color:#8f8578;margin-top:26px;font-size:16px;letter-spacing:3px">这里没有出口。因为家，不需要出口。</p>
+  <p style="color:#5d564c;margin-top:40px;font-size:14px;letter-spacing:2px">你一直在这里。<br>你一直都是这里的家具。</p>
+  <div style="margin-top:56px;color:#3d362e;font-size:12px;letter-spacing:1px" id="cartNote">您的购物车：0 件商品。</div>
+  <a href="#" id="restart" style="margin-top:60px;color:#2c2722;font-size:12px;letter-spacing:2px;border-bottom:1px solid #2c2722">重新开始</a>
+</section>
+
+<footer>
+  <div class="cols">
+    <div><h4>购物指南</h4><a href="#">配送说明</a><a href="#">退货政策</a><a href="#">组装服务</a><a href="#">商品保修</a></div>
+    <div><h4>关于 HUSET</h4><a href="#">公司历史</a><a href="#">可持续发展</a><a href="#">门店列表</a><a href="#">加入我们</a></div>
+    <div><h4>帮助中心</h4><a href="#">常见问题</a><a href="#">联系我们</a><a href="#">找回出口</a><a href="#">投诉建议</a></div>
+    <div><h4>关注我们</h4><a href="#">微信公众号</a><a href="#">微博</a><a href="#">小红书</a><a href="#">它在看着你</a></div>
+  </div>
+  <p class="foot-note">© 1943–2026 HUSET 家居 · 保留所有权利 · 也保留你</p>
+</footer>
+
+<!-- ===== 详情页 ===== -->
+<div class="page" id="detailPage">
+  <div class="page-top">
+    <button class="back" id="detailBack">← 返回</button>
+    <span class="page-logo">HUSET</span>
+  </div>
+  <div class="wrap"><div id="detailBody"></div></div>
+</div>
+
+<!-- ===== 购物车页 ===== -->
+<div class="page" id="cartPage">
+  <div class="page-top">
+    <button class="back" id="cartBack">← 返回</button>
+    <span class="page-logo">HUSET · 购物车</span>
+  </div>
+  <div class="wrap"><div id="cartBody"></div></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  /* ================= 商品数据 ================= */
+  var PRODUCTS = [
+    {id:'lampa',    name:'LÄMPA 落地灯',  price:199, old:399,  tag:'新品', hot:false, tier:0,
+     art:'<rect x="78" y="16" width="5" height="112" fill="#5f5548"/><rect x="30" y="126" width="100" height="8" rx="4" fill="#5f5548"/><path d="M50 24 L110 24 L96 72 L64 72 Z" fill="#e8b04a"/><rect x="74" y="70" width="12" height="8" fill="#5f5548"/>',
+     short:'柔光设计，照亮房间的每一个角落。', pricenote:'原价 ¥399',
+     detail:'柔和的散射光，适合客厅与卧室的角落。亚麻灯罩让光线更温暖，也让夜晚更安静。',
+     specs:[['尺寸','高 145 cm'],['材质','亚麻 · 钢'],['保养','干布擦拭']],
+     stock:'库存充足 · 全国可发货', note:''},
+    {id:'sofia',    name:'SOFIA 三人沙发', price:2999, old:5999, tag:'低至 5 折', hot:true, tier:0,
+     art:'<rect x="15" y="60" width="130" height="44" rx="14" fill="#9a6f3f"/><rect x="24" y="104" width="112" height="20" rx="10" fill="#8a6a44"/><rect x="15" y="55" width="32" height="60" rx="10" fill="#e9dfc9"/><rect x="113" y="55" width="32" height="60" rx="10" fill="#e9dfc9"/><rect x="30" y="124" width="10" height="18" fill="#6d5134"/><rect x="120" y="124" width="10" height="18" fill="#6d5134"/>',
+     short:'可拆洗布艺，坐下就不想再离开。', pricenote:'原价 ¥5999',
+     detail:'可拆洗布艺沙发，坐垫柔软回弹。适合一家人依偎，也适合一个人赖上一整个下午。',
+     specs:[['尺寸','3 人位'],['材质','聚酯纤维 · 实木框架'],['保养','沙发套可机洗']],
+     stock:'库存充足 · 全国可发货', note:''},
+    {id:'bordet',   name:'BORDET 餐桌',    price:1299, old:1999, tag:'新品', hot:false, tier:0,
+     art:'<rect x="10" y="50" width="140" height="12" rx="4" fill="#a8845b"/><rect x="24" y="62" width="10" height="80" fill="#8a6a44"/><rect x="126" y="62" width="10" height="80" fill="#8a6a44"/><rect x="56" y="76" width="8" height="66" fill="#8a6a44"/><rect x="96" y="76" width="8" height="66" fill="#8a6a44"/>',
+     short:'实木贴面，坚固耐用，适合一家人。', pricenote:'原价 ¥1999',
+     detail:'实木贴面桌面，坚固耐用，日常使用不留痕迹。一张桌子，围坐的是三餐与日常。',
+     specs:[['尺寸','140 × 80 cm'],['材质','橡木贴面'],['保养','湿布擦拭']],
+     stock:'库存充足 · 全国可发货', note:''},
+    {id:'stolen',   name:'STOLEN 餐椅',    price:249, old:349, tag:'新品', hot:false, tier:0,
+     art:'<rect x="38" y="60" width="84" height="14" rx="5" fill="#a8845b"/><rect x="38" y="30" width="12" height="86" rx="5" fill="#8a6a44"/><rect x="110" y="30" width="12" height="86" rx="5" fill="#8a6a44"/><rect x="48" y="74" width="10" height="58" fill="#6d5134"/><rect x="102" y="74" width="10" height="58" fill="#6d5134"/>',
+     short:'符合人体工学，久坐也不会累。', pricenote:'原价 ¥349',
+     detail:'符合人体工学的靠背弧度，久坐也轻松。轻巧，方便随时移动。',
+     specs:[['尺寸','高 82 cm'],['材质','实木'],['保养','干布擦拭']],
+     stock:'库存充足 · 全国可发货', note:''},
+    {id:'sangen',   name:'SÄNGEN 床架',    price:1999, old:3999, tag:'低至 5 折', hot:true, tier:0,
+     art:'<rect x="12" y="30" width="16" height="95" rx="5" fill="#8a6a44"/><rect x="132" y="30" width="16" height="95" rx="5" fill="#8a6a44"/><rect x="8" y="118" width="144" height="16" rx="6" fill="#9a6f3f"/><rect x="28" y="30" width="104" height="62" rx="8" fill="#e9dfc9"/><path d="M52 92 Q80 80 108 92" stroke="#d9cdb8" stroke-width="4" fill="none"/>',
+     short:'安静稳固，伴你一夜好眠。', pricenote:'原价 ¥3999',
+     detail:'稳固的榫卯结构，静音设计。翻身没有声音，床也不会跟着你的梦摇晃。',
+     specs:[['尺寸','150 × 200 cm'],['材质','桦木'],['保养','定期紧固螺丝']],
+     stock:'库存充足 · 全国可发货', note:''},
+    {id:'bokhylla', name:'BOKHYLLA 书架',  price:699, old:999, tag:'新品', hot:false, tier:0,
+     art:'<rect x="25" y="18" width="110" height="114" rx="4" fill="none" stroke="#8a6a44" stroke-width="6"/><rect x="33" y="40" width="94" height="4" fill="#a8845b"/><rect x="33" y="62" width="94" height="4" fill="#a8845b"/><rect x="33" y="84" width="94" height="4" fill="#a8845b"/><rect x="33" y="106" width="94" height="4" fill="#a8845b"/><rect x="35" y="24" width="10" height="14" fill="#c94f3d"/><rect x="49" y="24" width="10" height="14" fill="#6f8f5a"/><rect x="63" y="24" width="12" height="14" fill="#d9a441"/>',
+     short:'五层收纳，放满属于你的故事。', pricenote:'原价 ¥999',
+     detail:'五层开放收纳，放满书与生活。每一层都能承住重量，也承住时间。',
+     specs:[['尺寸','80 × 180 cm'],['材质','刨花板'],['承重','15 kg / 层']],
+     stock:'库存充足 · 全国可发货', note:''},
+    {id:'spegeln',  name:'SPEGELN 全身镜', price:399, old:599, tag:'新品', hot:false, tier:0,
+     art:'<ellipse cx="80" cy="62" rx="36" ry="46" fill="#cfe0e6" stroke="#8a6a44" stroke-width="5"/><ellipse cx="80" cy="62" rx="24" ry="34" fill="#e8f2f5"/><rect x="77" y="108" width="6" height="36" fill="#8a6a44"/><rect x="55" y="138" width="50" height="8" rx="4" fill="#8a6a44"/>',
+     short:'看到最真实的自己。', pricenote:'原价 ¥599',
+     detail:'大尺寸镜面，映照真实的你。出门前看一眼，整理衣角，也整理心情。',
+     specs:[['尺寸','60 × 170 cm'],['材质','玻璃 · 木框'],['保养','干布擦拭']],
+     stock:'库存充足 · 全国可发货', note:''},
+    {id:'mattan',   name:'MATTAN 地毯',    price:499, old:799, tag:'新品', hot:false, tier:0,
+     art:'<ellipse cx="80" cy="118" rx="72" ry="22" fill="#a8845b"/><ellipse cx="80" cy="114" rx="54" ry="14" fill="#b88f63"/><ellipse cx="80" cy="110" rx="42" ry="10" fill="#c9a06b"/>',
+     short:'柔软亲肤，是家的温度。', pricenote:'原价 ¥799',
+     detail:'柔软短绒，赤脚踩上去也很舒服。它把一块冰冷的地板，变成可以坐下、躺下的地方。',
+     specs:[['尺寸','160 × 230 cm'],['材质','棉 · 短绒'],['保养','局部清洁']],
+     stock:'库存充足 · 全国可发货', note:''},
+
+    {id:'bjorkberg',name:'BJÖRKBERG 书桌', price:199, old:null, tag:'特惠', hot:false, tier:1,
+     art:'<rect x="10" y="40" width="140" height="10" rx="3" fill="#4a4238"/><rect x="30" y="50" width="10" height="80" fill="#4a4238"/><rect x="120" y="50" width="10" height="80" fill="#4a4238"/><circle cx="80" cy="45" r="4" fill="#c94f3d"/>',
+     short:'实木贴面，来自一片记得你的森林。', pricenote:'今晚之前',
+     detail:'实木贴面书桌，桌面平整，适合长时间伏案。抽屉顺滑，安静得听不到一点声响。',
+     specs:[['尺寸','120 × 60 cm'],['材质','桦木贴面'],['保养','干布擦拭']],
+     stock:'库存充足', note:'本产品使用的木材，来自一片记得你的森林。'},
+    {id:'morker',   name:'MÖRKER 台灯',    price:299, old:null, tag:'特惠', hot:false, tier:1,
+     art:'<path d="M50 40 L110 40 L98 92 L62 92 Z" fill="#c94f3d"/><rect x="77" y="92" width="6" height="40" fill="#4a4238"/><rect x="55" y="132" width="50" height="8" rx="4" fill="#4a4238"/><circle cx="80" cy="62" r="8" fill="#ffd9a0"/>',
+     short:'照亮房间，以及房间里的其他东西。', pricenote:'暗处另有折扣',
+     detail:'红色灯罩的台灯，为夜晚营造私密的氛围。光线很柔和，柔得像是会自己移动。',
+     specs:[['尺寸','高 52 cm'],['材质','金属 · 玻璃'],['保养','干布擦拭']],
+     stock:'仅剩 13 件', note:'它照亮房间，以及房间里的其他东西。'},
+    {id:'tystnad',  name:'TYSTNAD 窗帘',   price:499, old:null, tag:'特惠', hot:false, tier:1,
+     art:'<rect x="12" y="20" width="6" height="130" fill="#4a4238"/><path d="M18 30 Q80 10 142 30 L142 120 Q80 140 18 120 Z" fill="#3a3540"/><path d="M26 42 Q80 26 134 42" stroke="#241f2a" stroke-width="3" fill="none"/><path d="M26 72 Q80 56 134 72" stroke="#241f2a" stroke-width="3" fill="none"/>',
+     short:'遮光率 99%。剩下 1%，是留给你的。', pricenote:'遮住的不只是光',
+     detail:'高遮光窗帘，把夜晚留给自己。拉上它，房间里只剩下安静，和你的呼吸声。',
+     specs:[['尺寸','140 × 250 cm × 2'],['材质','聚酯纤维'],['保养','机洗 · 低温']],
+     stock:'仅剩 3 件', note:'遮光率 99%。剩下 1% 是留给你的。'},
+    {id:'rosten',   name:'RÖSTEN 挂钟',    price:149, old:null, tag:'特惠', hot:false, tier:1,
+     art:'<circle cx="80" cy="70" r="48" fill="#efe9dd" stroke="#4a4238" stroke-width="6"/><line x1="80" y1="70" x2="80" y2="42" stroke="#4a4238" stroke-width="4"/><line x1="80" y1="70" x2="104" y2="70" stroke="#4a4238" stroke-width="4"/><circle cx="80" cy="70" r="4" fill="#c94f3d"/>',
+     short:'走得很准。只是偶尔，会倒着走。', pricenote:'它一直在数',
+     detail:'极简挂钟，时间一目了然。安静，精准，适合任何墙面。',
+     specs:[['尺寸','直径 30 cm'],['材质','塑料 · 石英机芯'],['电池','1 × AA']],
+     stock:'库存：它一直在数', note:'它走得很准。只是偶尔，会倒着走。'},
+    {id:'dorren',   name:'DÖRREN 门垫',    price:99, old:null, tag:'特惠', hot:false, tier:1,
+     art:'<rect x="20" y="120" width="120" height="12" rx="6" fill="#4a4238"/><path d="M30 120 Q30 78 80 74 Q130 78 130 120" fill="#3a3540"/><text x="80" y="112" font-size="20" text-anchor="middle" fill="#c94f3d">欢迎</text>',
+     short:'欢迎回家。请脱下鞋。请留下。', pricenote:'进得来，出不去',
+     detail:'放在门口，接住鞋底的灰尘与雨水。耐磨，易清理，欢迎回家。',
+     specs:[['尺寸','60 × 90 cm'],['材质','椰棕'],['保养','拍打 · 冲洗']],
+     stock:'进得来，出不去', note:'请脱下鞋。请留下。'},
+    {id:'skugga',   name:'SKUGGA 床头柜',  price:399, old:null, tag:'特惠', hot:false, tier:1,
+     art:'<rect x="30" y="42" width="100" height="72" rx="6" fill="#4a4238"/><rect x="30" y="42" width="100" height="72" rx="6" fill="none" stroke="#241f2a" stroke-width="3"/><rect x="50" y="62" width="60" height="10" rx="3" fill="#3a3540"/><rect x="50" y="84" width="60" height="10" rx="3" fill="#3a3540"/><circle cx="108" cy="52" r="5" fill="#c94f3d"/>',
+     short:'抽屉里有时会多出一些东西。别担心，那是你的。', pricenote:'请关上抽屉',
+     detail:'两层抽屉，收纳你的睡前小物。台面刚好放下一盏灯、一杯水、一本书。',
+     specs:[['尺寸','40 × 55 cm'],['材质','刨花板'],['保养','干布擦拭']],
+     stock:'仅剩 1 件', note:'抽屉里有时会多出一些东西。别担心，那是你的。'},
+    {id:'flickan',  name:'FLICKAN 壁灯',   price:299, old:null, tag:'特惠', hot:false, tier:1,
+     art:'<path d="M80 30 Q55 30 55 50 L55 92 Q55 112 80 112 Q105 112 105 92 L105 50 Q105 30 80 30 Z" fill="#3a3540"/><ellipse cx="80" cy="72" rx="20" ry="30" fill="#c94f3d" opacity=".7"/><line x1="55" y1="112" x2="105" y2="112" stroke="#4a4238" stroke-width="4"/>',
+     short:'夜里，它会轻轻眨一下眼。', pricenote:'它看到你了',
+     detail:'壁灯，为墙面增添温柔的轮廓。光线向上，把影子投在天花板上。',
+     specs:[['尺寸','高 40 cm'],['材质','金属 · 玻璃'],['保养','干布擦拭']],
+     stock:'它看到你了', note:'夜里，它会轻轻眨一下眼。'},
+    {id:'hallen',   name:'HALLEN 全身镜',  price:499, old:null, tag:'特惠', hot:false, tier:1,
+     art:'<ellipse cx="80" cy="62" rx="36" ry="46" fill="#3a3540" stroke="#241f2a" stroke-width="5"/><ellipse cx="80" cy="62" rx="24" ry="34" fill="#100e14"/><ellipse cx="80" cy="62" rx="24" ry="34" fill="none" stroke="#c94f3d" stroke-width="1" opacity=".4"/><rect x="77" y="108" width="6" height="36" fill="#4a4238"/>',
+     short:'看到最真实的自己。请再靠近一点看看。', pricenote:'镜子里的人在等你',
+     detail:'全身镜，出门前看一眼自己。镜面平整，映照出最清晰的轮廓。',
+     specs:[['尺寸','60 × 170 cm'],['材质','玻璃 · 木框'],['保养','干布擦拭']],
+     stock:'仅剩 1 件（那 1 件是你）', note:'镜子里的人在等你。请再靠近一点。'}
+  ];
+
+  function svg(inner){ return '<svg viewBox="0 0 160 150" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">'+inner+'</svg>'; }
+  function byId(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function findProduct(id){ for(var i=0;i<PRODUCTS.length;i++){ if(PRODUCTS[i].id===id) return PRODUCTS[i]; } return null; }
+
+  /* 商品卡片 */
+  function cardHTML(p){
+    return '<div class="card" data-id="'+p.id+'">'
+      +'<div class="thumb">'+svg(p.art)+'</div>'
+      +'<div class="card-body">'
+        +'<span class="tag'+(p.hot?' hot':'')+'">'+p.tag+'</span>'
+        +'<h3>'+p.name+'</h3>'
+        +'<p class="desc">'+p.short+'</p>'
+        +'<div class="price">¥'+p.price+' <small>'+(p.pricenote||'')+'</small></div>'
+        +'<div class="card-more">查看详情 →</div>'
+      +'</div></div>';
+  }
+
+  var normalGrid = byId('gridNormal');
+  var weirdGrid = byId('gridWeird');
+  normalGrid.innerHTML = PRODUCTS.filter(function(p){return p.tier===0;}).map(cardHTML).join('');
+  weirdGrid.innerHTML = PRODUCTS.filter(function(p){return p.tier===1;}).map(cardHTML).join('');
+
+  function bindGrid(el){
+    el.addEventListener('click', function(e){
+      var c = e.target.closest('.card');
+      if(c) openProduct(c.getAttribute('data-id'));
+    });
+  }
+  bindGrid(normalGrid); bindGrid(weirdGrid);
+
+  /* ================= 购物车状态 ================= */
+  var cart = [];            // {id, qty}
+  var storeScroll = 0;
+
+  function cartCount(){ var n=0; for(var i=0;i<cart.length;i++) n+=cart[i].qty; return n; }
+  function addToCart(id, qty){
+    qty = qty||1;
+    for(var i=0;i<cart.length;i++){ if(cart[i].id===id){ cart[i].qty+=qty; return; } }
+    cart.push({id:id, qty:qty});
+  }
+  function setQty(id, qty){
+    for(var i=0;i<cart.length;i++){ if(cart[i].id===id){ cart[i].qty=qty; if(cart[i].qty<=0) cart.splice(i,1); return; } }
+  }
+  function removeItem(id){
+    for(var i=0;i<cart.length;i++){ if(cart[i].id===id){ cart.splice(i,1); return; } }
+  }
+
+  function toast(msg){
+    var t = byId('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._tm); t._tm = setTimeout(function(){ t.classList.remove('show'); }, 1600);
+  }
+
+  /* 幻影商品：随滚动深度加入 */
+  function phantomItems(){
+    var p = progress(); var out = [];
+    if(p>=0.30) out.push({id:'dorren', qty:1, why:'已为你自动加入'});
+    if(p>=0.55) out.push({id:'rosten', qty:1, why:'它自己进来的'});
+    if(p>=0.80) out.push({id:'self', qty:1, why:'你一直都在'});
+    return out;
+  }
+
+  /* ================= 详情页 ================= */
+  function openProduct(id){
+    var p = findProduct(id); if(!p) return;
+    var body = byId('detailBody');
+    var specsHtml = p.specs.map(function(s){ return '<li><b>'+s[0]+'</b> '+esc(s[1])+'</li>'; }).join('');
+    body.innerHTML =
+      '<div class="detail-grid">'
+        +'<div class="detail-art">'+svg(p.art)+'</div>'
+        +'<div class="detail-info">'
+          +'<span class="tag'+(p.hot?' hot':'')+'">'+p.tag+'</span>'
+          +'<h2 style="font-size:clamp(28px,4vw,44px)">'+p.name+'</h2>'
+          +'<div class="stars" style="margin:8px 0 4px">★★★★★ <span style="color:#8b857c;font-size:12px;letter-spacing:0">（4.9）</span></div>'
+          +'<div class="price" style="margin-top:8px">¥'+p.price+' <small>'+(p.pricenote||'')+'</small></div>'
+          +'<p class="desc">'+p.detail+'</p>'
+          +'<ul class="specs">'+specsHtml+'</ul>'
+          +'<button class="btn" id="addBtn">加入购物车</button>'
+          +'<p class="stock">'+esc(p.stock)+'</p>'
+          +(p.note ? '<p class="pnote">'+esc(p.note)+'</p>' : '')
+        +'</div></div>';
+
+    byId('addBtn').addEventListener('click', function(){
+      addToCart(p.id);
+      updateBadge();
+      toast('已加入购物车：'+p.name);
+    });
+
+    showPage('detailPage');
+    location.hash = '#/product/'+p.id;
+  }
+
+  /* ================= 购物车页 ================= */
+  var snapPhantom = null, snapDepth = 0;
+  function openCart(){
+    if(!byId('cartPage').classList.contains('open')){
+      snapPhantom = phantomItems();
+      snapDepth = progress();
+    }
+    renderCart();
+    showPage('cartPage');
+    if(location.hash !== '#/cart') location.hash = '#/cart';
+  }
+
+  function renderCart(){
+    var body = byId('cartBody');
+    var phantom = snapPhantom || [];
+
+    if(cart.length===0 && phantom.length===0){
+      body.innerHTML = '<div class="cart-empty"><div class="big">🛒</div><p>购物车是空的。</p><p style="margin-top:8px;font-size:13px">去挑一件，把它带回家吧。</p></div>';
+      return;
+    }
+
+    var rows = '';
+    var subtotal = 0, selfIncluded = false;
+
+    cart.forEach(function(item){
+      var p = findProduct(item.id); if(!p) return;
+      subtotal += p.price*item.qty;
+      rows += cartRow(p, item.qty, '');
+    });
+
+    phantom.forEach(function(ph){
+      if(ph.id==='self'){
+        selfIncluded = true;
+        rows += '<div class="cart-item cart-phantom">'
+          +'<div class="ci-art">'+svg('<ellipse cx="80" cy="62" rx="30" ry="40" fill="#0d0a08" stroke="#3a2c1d" stroke-width="4"/><ellipse cx="80" cy="58" rx="14" ry="16" fill="#1a120c"/>')+'</div>'
+          +'<div><div class="ci-name">你自己</div><div class="ci-note">'+ph.why+'</div></div>'
+          +'<div class="ci-price">你的时间</div></div>';
+        return;
+      }
+      var p = findProduct(ph.id); if(!p) return;
+      rows += cartRow(p, ph.qty, ph.why, true);
+    });
+
+    var ship = cart.length>0 ? '免费' : '—';
+    var totalStr = selfIncluded ? '你的时间' : '¥'+(subtotal).toLocaleString();
+    var scary = '';
+    var depth = snapDepth;
+    if(depth>=0.8){
+      scary = '此订单无法取消。它已经被计入。';
+    } else if(depth>=0.55){
+      scary = '你还有一些商品在购物车里，虽然你没有放进去。';
+    } else if(depth>=0.30){
+      scary = '有一件商品，是你没有主动加入的。';
+    }
+
+    body.innerHTML =
+      '<div class="cart-list">'+rows+'</div>'
+      +'<div class="cart-summary">'
+        +'<div class="row"><span>小计</span><span>'+ (selfIncluded?'—':'¥'+subtotal.toLocaleString()) +'</span></div>'
+        +'<div class="row"><span>运费</span><span>'+ship+'</span></div>'
+        +'<div class="row total"><span>合计</span><span>'+totalStr+' <small>'+(selfIncluded?'以及你':'')+'</small></span></div>'
+        +'<button class="btn checkout" id="checkoutBtn"'+(selfIncluded?' disabled':'')+'>'+(selfIncluded?'结算（我们会在打烊后联系你）':'去结算')+'</button>'
+        +(scary?'<p class="cart-scary-note">'+scary+'</p>':'')
+      +'</div>';
+
+    bindCartControls(body);
+  }
+
+  function cartRow(p, qty, why, phantom){
+    return '<div class="cart-item'+(phantom?' cart-phantom':'')+'" data-id="'+p.id+'">'
+      +'<div class="ci-art">'+svg(p.art)+'</div>'
+      +'<div style="min-width:0">'
+        +'<div class="ci-name">'+p.name+'</div>'
+        +(why?'<div class="ci-note">'+why+'</div>':'')
+        +'<div class="qty" style="margin-top:8px">'
+          +'<button data-act="dec">−</button><span>×'+qty+'</span><button data-act="inc">+</button>'
+          +'<button data-act="del" style="margin-left:12px;border:none;background:none;color:#b06a5a;font-size:12px">移除</button>'
+        +'</div>'
+      +'</div>'
+      +'<div class="ci-price">¥'+(p.price*qty).toLocaleString()+'</div></div>';
+  }
+
+  function bindCartControls(body){
+    body.addEventListener('click', function(e){
+      var b = e.target.closest('[data-act]'); if(!b) return;
+      var row = b.closest('.cart-item'); if(!row) return;
+      var id = row.getAttribute('data-id');
+      var act = b.getAttribute('data-act');
+      var item = null;
+      for(var i=0;i<cart.length;i++){ if(cart[i].id===id){ item=cart[i]; break; } }
+      if(!item){ toast('你无法移除它。它不想离开。'); return; }
+      if(act==='inc') setQty(id, item.qty+1);
+      else if(act==='dec') setQty(id, item.qty-1);
+      else if(act==='del') removeItem(id);
+      updateBadge();
+      renderCart();
+    });
+    var chk = byId('checkoutBtn');
+    if(chk) chk.addEventListener('click', function(){
+      toast('订单已提交。我们会在打烊后联系你。');
+    });
+  }
+
+  /* ================= 页面路由 ================= */
+  function showPage(id){
+    ['detailPage','cartPage'].forEach(function(pid){
+      var el = byId(pid);
+      el.classList.toggle('open', pid===id);
+      if(pid===id) el.scrollTop = 0;
+    });
+    storeScroll = window.scrollY;
+    document.body.classList.add('route-open');
+  }
+  function closePages(){
+    ['detailPage','cartPage'].forEach(function(pid){ byId(pid).classList.remove('open'); });
+    document.body.classList.remove('route-open');
+    window.scrollTo(0, storeScroll);
+  }
+
+  function route(){
+    var h = location.hash;
+    if(h.indexOf('#/product/')===0){
+      var id = h.slice('#/product/'.length);
+      var p = findProduct(id);
+      if(p){ openProduct(id); return; }
+    }
+    if(h === '#/cart'){ openCart(); return; }
+    closePages();
+  }
+  window.addEventListener('hashchange', route);
+
+  byId('detailBack').addEventListener('click', function(){ closePages(); if(location.hash) history.replaceState(null,'',location.pathname+location.search); });
+  byId('cartBack').addEventListener('click', function(){ closePages(); if(location.hash) history.replaceState(null,'',location.pathname+location.search); });
+  byId('cartOpen').addEventListener('click', openCart);
+
+  /* ================= 滚动驱动 ================= */
+  var docEl = document.documentElement;
+  function clamp(v,a,b){return Math.min(b,Math.max(a,v));}
+  function lerp(a,b,t){return a+(b-a)*t;}
+  function sstep(a,b,t){var x=clamp((t-a)/(b-a),0,1);return x*x*(3-2*x);}
+  function progress(){
+    var total = docEl.scrollHeight - window.innerHeight;
+    return total>0 ? window.scrollY/total : 0;
+  }
+
+  var labelStages = [
+    [0.00,'购物进度'],[0.15,'购物进度'],[0.30,'进度'],[0.45,'快到了'],
+    [0.58,'他们叫你继续看'],[0.70,'快到家了'],[0.80,'别停'],[0.90,'没有尽头'],[0.97,'差一点点']
+  ];
+
+  function updateBadge(){
+    var real = cartCount();
+    var phantom = phantomItems().length;
+    var n = real + phantom;
+    var b = byId('cartBadge');
+    b.textContent = String(n);
+    b.style.display = n>0 ? '' : 'none';
+  }
+
+  var ticking=false;
+  function update(){
+    ticking=false;
+    if(document.body.classList.contains('route-open')) return;
+    var p = progress();
+
+    byId('wash').style.opacity = String(lerp(0,0.32,sstep(0.18,0.55,p)) + lerp(0,0.45,sstep(0.55,1,p)));
+    byId('shade').style.opacity = String(sstep(0.52,1,p)*0.88);
+    byId('red').style.opacity = String(sstep(0.68,1,p)*0.24);
+    byId('vignette').style.opacity = String(sstep(0.28,0.95,p)*0.95);
+    byId('static').style.opacity = String(sstep(0.72,1,p)*0.18);
+
+    var shown = p>=0.995 ? 0.995 : p;
+    var bar = byId('progressbar');
+    bar.style.width = (shown*100).toFixed(1)+'%';
+    bar.style.background = p>0.5 ? '#5d1410' : 'var(--wood)';
+    var l='购物进度';
+    for(var i=0;i<labelStages.length;i++){ if(p>=labelStages[i][0]) l=labelStages[i][1]; }
+    byId('progressLabel').textContent = l+' · '+Math.floor(p*100)+'%';
+    byId('progressLabel').style.color = p>0.6 ? '#7a1e14' : '#b6a98f';
+
+    var lt = byId('limitTag');
+    if(lt){ lt.textContent = p>0.8 ? '没有时限了' : (p>0.45 ? '无限时' : '限时'); }
+
+    updateBadge();
+
+    var note = byId('cartNote');
+    if(note && p>0.9){
+      var c = cartCount()+phantomItems().length;
+      note.innerHTML = '您的购物车：'+c+' 件商品，包括 1 件「你自己」。<br>合计：你的时间。';
+    }
+
+    var hDark = sstep(0.58,0.95,p);
+    var hd = byId('siteHeader');
+    hd.style.background = 'rgba('+Math.round(lerp(250,8,hDark))+','+Math.round(lerp(247,7,hDark))+','+Math.round(lerp(242,6,hDark))+','+lerp(0.92,0.82,hDark)+')';
+    hd.style.borderColor = 'rgba(231,224,212,'+(1-hDark*0.7)+')';
+  }
+
+  function onScroll(){ if(!ticking){ ticking=true; requestAnimationFrame(update); } }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll);
+
+  /* 深水区偶发故障 */
+  var glitching=false;
+  setInterval(function(){
+    if(document.body.classList.contains('route-open')) return;
+    var p = progress();
+    if(p>0.62 && Math.random()<0.16 && !glitching){
+      glitching=true;
+      document.body.classList.add('glitching');
+      if(Math.random()<0.4) document.body.classList.add('shake');
+      setTimeout(function(){ document.body.classList.remove('glitching','shake'); glitching=false; }, 140+Math.random()*220);
+    }
+  }, 900);
+
+  /* 错误的时钟 */
+  function pad(n){ return (n<10?'0':'')+n; }
+  function updateClock(){
+    var now = new Date();
+    var h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+    if(Math.random()<0.09){
+      var g=['8̸8','—̶—','0̶0','⚡⚡'];
+      byId('clock').textContent = g[(Math.random()*g.length)|0]+':'+pad(m)+':'+pad(s);
+      byId('clockNote').textContent = '时间正在被计算……';
+      return;
+    }
+    if(Math.random()<0.1) s = (s+57)%60;
+    byId('clock').textContent = pad(h)+':'+pad(m)+':'+pad(s);
+    var after = (h>=21 || h<9);
+    byId('clockNote').textContent = after ? '营业时间 09:00 – 21:00 · 现在已经过了打烊时间' : '营业时间 09:00 – 21:00 · 现在还是营业时间（真的吗）';
+  }
+  setInterval(updateClock,1000);
+  updateClock();
+
+  /* 眼睛跟随光标 */
+  document.addEventListener('mousemove', function(e){
+    var nx = clamp((e.clientX/window.innerWidth)*2-1,-1,1);
+    var ny = clamp((e.clientY/window.innerHeight)*2-1,-1,1);
+    docEl.style.setProperty('--mx',nx);
+    docEl.style.setProperty('--my',ny);
+  });
+
+  /* 会员注册 */
+  var form = byId('memberForm');
+  if(form){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var name = (byId('fname').value||'你').trim();
+      byId('formReveal').innerHTML = '谢谢你，'+esc(name)+'。<br>我们一直都知道你在哪里。<br>会员编号：000001。你一直是第一个。';
+      form.querySelector('button').textContent = '已 注 册';
+      form.querySelector('button').style.opacity = '0.6';
+    });
+  }
+
+  /* 隐藏文字浮现 */
+  var wObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){ if(en.isIntersecting){ setTimeout(function(){ en.target.classList.add('on'); }, 700); } });
+  },{threshold:0.4});
+  document.querySelectorAll('.whisper').forEach(function(w){ wObs.observe(w); });
+
+  /* 重新开始 */
+  byId('restart').addEventListener('click', function(e){
+    e.preventDefault();
+    cart = [];
+    var f = byId('formReveal'); if(f) f.innerHTML='';
+    var b = form && form.querySelector('button'); if(b){ b.textContent='注 册'; b.style.opacity='1'; }
+    byId('fname').value=''; byId('femail').value='';
+    byId('cartNote').innerHTML = '您的购物车：0 件商品。';
+    closePages();
+    updateBadge();
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  updateBadge();
+  update();
+  route();
+})();
+</script>
+</body>
+</html>
